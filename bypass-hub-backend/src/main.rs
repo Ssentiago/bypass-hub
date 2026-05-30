@@ -3,6 +3,7 @@ pub mod db;
 pub mod middleware;
 pub mod models;
 pub mod state;
+pub mod utils;
 
 use crate::state::AppState;
 use axum::Router;
