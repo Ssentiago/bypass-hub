@@ -1,0 +1,36 @@
+{
+  "common": {
+    "add": "Add",
+    "bulk_add": "Bulk Add",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "required": "Required",
+    "optional": "Optional",
+    "type": "Type",
+    "value": "Value",
+    "name": "Name",
+    "description": "Description"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "routes": {
+    "title": "Routes",
+    "ungrouped": "Ungrouped",
+    "delete_confirm": "Delete route?",
+    "bulk_hint": "Type is detected automatically. One route per line.",
+    "placeholder": "example.com or 1.2.3.4",
+    "domain": "Domain",
+    "ip": "IP"
+  },
+  "groups": {
+    "title": "Groups"
+  },
+  "agents": {
+    "title": "Agents"
+  }
+}
