@@ -1,12 +1,13 @@
+// src/pages/Dashboard/RoutesTab.tsx
 import {useEffect, useState} from 'react';
 import {Collapse, Button, Table, Popconfirm, Space, Modal, Form, Input, Select, Typography, Tag} from 'antd';
 import {PlusOutlined, DeleteOutlined} from '@ant-design/icons';
-import {api} from '@/core/api/client';
+import {api} from '@/core/api/client.ts';
 import type {Route, GroupedRoutes} from '@/core/api/modules/routes';
 import type {Group} from '@/core/api/modules/groups';
-import {useTranslation} from "react-i18next";
+import {useTranslation} from 'react-i18next';
 
-const {Title, Text} = Typography;
+const {Title} = Typography;
 
 const IP_REGEX = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 
@@ -16,8 +17,11 @@ const parseRoutes = (text: string) =>
         .filter(Boolean)
         .map(value => ({value, type: IP_REGEX.test(value) ? 'ip' as const : 'domain' as const}));
 
+interface Props {
+    scope: 'xui' | 'mikrotik';
+}
 
-const RoutesTab = () => {
+const RoutesTab = ({scope}: Props) => {
     const [grouped, setGrouped] = useState<GroupedRoutes[]>([]);
     const [groups, setGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(false);
@@ -28,20 +32,20 @@ const RoutesTab = () => {
     const [bulkText, setBulkText] = useState('');
     const [form] = Form.useForm();
     const [bulkForm] = Form.useForm();
+    const {t} = useTranslation();
 
-    const {t} = useTranslation()
-
+    const scopeApi = api[scope];
 
     const columns = (onDelete: (id: number) => void) => [
-        {title: t("common.value"), dataIndex: 'value', key: 'value'},
+        {title: t('common.value'), dataIndex: 'value', key: 'value'},
         {
-            title: t("common.type"),
+            title: t('common.type'),
             dataIndex: 'type',
             key: 'type',
             width: 100,
             render: (type: string) => (
                 <Tag color={type === 'ip' ? 'blue' : 'green'}>
-                    {type === "ip" ? t('routes.ip') : t("routes.domain")}
+                    {type === 'ip' ? t('routes.ip') : t('routes.domain')}
                 </Tag>
             ),
         },
@@ -62,13 +66,12 @@ const RoutesTab = () => {
         },
     ];
 
-
     const load = async () => {
         setLoading(true);
         try {
             const [groupedData, groupsData] = await Promise.all([
-                api.routes.listGrouped(),
-                api.groups.list(),
+                scopeApi.routes.listGrouped(),
+                scopeApi.groups.list(),
             ]);
             setGrouped(groupedData);
             setGroups(groupsData);
@@ -79,17 +82,17 @@ const RoutesTab = () => {
 
     useEffect(() => {
         load();
-    }, []);
+    }, [scope]);
 
     const handleDelete = async (id: number) => {
-        await api.routes.delete(id);
+        await scopeApi.routes.delete(id);
         await load();
     };
 
     const handleCreate = async (values: { value: string; type: 'domain' | 'ip'; group_ids?: number[] }) => {
         setSubmitting(true);
         try {
-            await api.routes.create(values);
+            await scopeApi.routes.create(values);
             setModalOpen(false);
             form.resetFields();
             await load();
@@ -103,7 +106,7 @@ const RoutesTab = () => {
         if (!routes.length) return;
         setBulkSubmitting(true);
         try {
-            await api.routes.bulkCreate({routes, group_ids: values.group_ids});
+            await scopeApi.routes.bulkCreate({routes, group_ids: values.group_ids});
             setBulkOpen(false);
             setBulkText('');
             bulkForm.resetFields();
@@ -132,7 +135,6 @@ const RoutesTab = () => {
                 dataSource={section.routes}
                 pagination={false}
                 scroll={{y: 400}}
-
             />
         ),
     }));
@@ -143,14 +145,13 @@ const RoutesTab = () => {
                 <Title level={4} style={{margin: 0}}>{t('routes.title')}</Title>
                 <Space>
                     <Button icon={<PlusOutlined/>} onClick={() => setBulkOpen(true)}>{t('common.bulk_add')}</Button>
-                    <Button type="primary" icon={<PlusOutlined/>}
-                            onClick={() => setModalOpen(true)}>{t('common.add')}</Button>
+                    <Button type="primary" icon={<PlusOutlined/>} onClick={() => setModalOpen(true)}>
+                        {t('common.add')}
+                    </Button>
                 </Space>
             </Space>
 
-            <Collapse
-                items={items}
-            />
+            <Collapse items={items}/>
 
             <Modal
                 title={t('common.add')}
@@ -195,11 +196,11 @@ const RoutesTab = () => {
                             onChange={e => setBulkText(e.target.value)}
                         />
                         <div style={{marginTop: 4, fontSize: 12, color: '#666'}}>
-                            {t("routes.bulk_hint")}
+                            {t('routes.bulk_hint')}
                         </div>
                     </Form.Item>
                     <Form.Item name="group_ids" label={t('groups.title')}>
-                        <Select mode="multiple" options={groupOptions} placeholder={t("common.optional")}/>
+                        <Select mode="multiple" options={groupOptions} placeholder={t('common.optional')}/>
                     </Form.Item>
                 </Form>
             </Modal>

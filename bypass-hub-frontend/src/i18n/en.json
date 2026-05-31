@@ -30,7 +30,10 @@
   "groups": {
     "title": "Groups"
   },
-  "agents": {
-    "title": "Agents"
+  "infrastructure": {
+    "title": "Infrastructure",
+    "servers": {
+      "title": "Servers"
+    }
   }
 }

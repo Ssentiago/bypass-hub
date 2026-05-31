@@ -1,15 +1,16 @@
+// src/db/xui/routes.rs
 use crate::models::route::Route;
 use sqlx::SqlitePool;
 
 pub async fn find_all(pool: &SqlitePool) -> sqlx::Result<Vec<Route>> {
-    sqlx::query_as!(Route, "SELECT id, value, type as \"type\" FROM routes")
+    sqlx::query_as!(Route, "SELECT id, value, type as \"type\" FROM xui_routes")
         .fetch_all(pool)
         .await
 }
 
 pub async fn create(pool: &SqlitePool, value: &str, route_type: &str) -> sqlx::Result<i64> {
     let id = sqlx::query!(
-        "INSERT INTO routes (value, type) VALUES (?, ?)",
+        "INSERT INTO xui_routes (value, type) VALUES (?, ?)",
         value,
         route_type
     )
@@ -24,7 +25,7 @@ pub async fn create_bulk(pool: &SqlitePool, routes: &[(&str, &str)]) -> sqlx::Re
     let mut inserted = 0u64;
     for (value, route_type) in routes {
         let result = sqlx::query!(
-            "INSERT OR IGNORE INTO routes (value, type) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO xui_routes (value, type) VALUES (?, ?)",
             value,
             route_type
         )
@@ -47,9 +48,9 @@ pub async fn find_grouped(pool: &SqlitePool) -> sqlx::Result<Vec<GroupedRoutes>>
         SELECT
             r.id, r.value, r.type as "type",
             g.id as "group_id?", g.name as "group_name?"
-        FROM routes r
-        LEFT JOIN routes_groups rg ON rg.route_id = r.id
-        LEFT JOIN "group" g ON g.id = rg.group_id
+        FROM xui_routes r
+        LEFT JOIN xui_routes_groups rg ON rg.route_id = r.id
+        LEFT JOIN xui_groups g ON g.id = rg.group_id
         ORDER BY g.name NULLS LAST, r.value
         "#
     )
@@ -65,7 +66,7 @@ pub async fn find_grouped(pool: &SqlitePool) -> sqlx::Result<Vec<GroupedRoutes>>
             routes: vec![],
         });
         entry.routes.push(Route {
-            id: row.id.unwrap_or_default(),
+            id: row.id.expect("route id cannot be null"),
             value: row.value,
             r#type: row.r#type,
         });
@@ -75,7 +76,7 @@ pub async fn find_grouped(pool: &SqlitePool) -> sqlx::Result<Vec<GroupedRoutes>>
 }
 
 pub async fn delete(pool: &SqlitePool, id: i64) -> sqlx::Result<bool> {
-    let affected = sqlx::query!("DELETE FROM routes WHERE id = ?", id)
+    let affected = sqlx::query!("DELETE FROM xui_routes WHERE id = ?", id)
         .execute(pool)
         .await?
         .rows_affected();

@@ -14,7 +14,6 @@ use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::Instant;
 use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
@@ -46,8 +45,10 @@ async fn main() -> anyhow::Result<()> {
     let backend_port = env::var("BACKEND_PORT").unwrap_or_else(|_| "3000".to_string());
 
     let protected = Router::new()
-        .nest("/api/routes", api::routes::router())
-        .nest("/api/groups", api::group::router())
+        .nest("/api/xui/routes", api::xui::route::router())
+        .nest("/api/xui/groups", api::xui::group::router())
+        .nest("/api/mikrotik/routes", api::mikrotik::route::router())
+        .nest("/api/mikrotik/groups", api::mikrotik::group::router())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::session::auth_session,

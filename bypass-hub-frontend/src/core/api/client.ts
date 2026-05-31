@@ -1,6 +1,6 @@
+// src/core/api/client.ts
 import {AuthModule} from "./modules/auth.ts";
-import {GroupsModule} from "./modules/groups.ts";
-import {RoutesModule} from "./modules/routes.ts";
+import {ScopedApi} from "./modules/scoped.ts";
 import {API_BASE} from "@/core/config.ts";
 
 export class ApiError extends Error {
@@ -24,20 +24,20 @@ export class ApiError extends Error {
 
 export class Api {
     public auth: AuthModule;
-    public routes: RoutesModule;
-    public groups: GroupsModule;
+    public xui: ScopedApi;
+    public mikrotik: ScopedApi;
 
     private readonly API_PREFIX = '/api';
 
     constructor() {
         this.auth = new AuthModule(this);
-        this.routes = new RoutesModule(this);
-        this.groups = new GroupsModule(this);
+        this.xui = new ScopedApi(this, 'xui');
+        this.mikrotik = new ScopedApi(this, 'mikrotik');
     }
 
     async request<T>(path: string, options?: RequestInit): Promise<T> {
         const url = `${API_BASE}${this.API_PREFIX}${path}`;
-        
+
         const headers = new Headers(options?.headers);
         if (!(options?.body instanceof FormData) && !headers.has('Content-Type')) {
             headers.set('Content-Type', 'application/json');

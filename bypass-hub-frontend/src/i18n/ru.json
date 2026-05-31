@@ -32,7 +32,10 @@
     "name": "Название",
     "description": "Описание"
   },
-  "agents": {
-    "title": "Агенты"
+  "infrastructure": {
+    "title": "Инфраструктура",
+    "servers": {
+      "title": "Серверы"
+    }
   }
 }

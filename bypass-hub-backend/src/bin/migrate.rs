@@ -1,19 +1,16 @@
-use sqlx::PgPool;
+use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::sqlite::SqlitePoolOptions;
 use std::env;
+use std::str::FromStr;
 
 #[tokio::main]
-async fn main() -> Result<(), sqlx::Error> {
+async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
 
-    let db_user = env::var("DB_USER").expect("DB_USER must be set");
-    let db_password = env::var("DB_PASSWORD").expect("DB_PASSWORD must be set");
-    let db_port = env::var("DB_PORT").expect("DB_PORT must be set");
+    let db_url = env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://bypass-hub.db".to_string());
 
-    let db_url = format!(
-        "postgres://{}:{}@localhost:{}",
-        db_user, db_password, db_port
-    );
-    let pool = PgPool::connect(&db_url).await?;
+    let opts = SqliteConnectOptions::from_str(&db_url)?.create_if_missing(true);
+    let pool = SqlitePoolOptions::new().connect_with(opts).await?;
 
     println!("Running database migrations...");
     sqlx::migrate!("./migrations").run(&pool).await?;

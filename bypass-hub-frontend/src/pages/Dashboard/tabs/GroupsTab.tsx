@@ -1,25 +1,31 @@
+// src/pages/Dashboard/GroupsTab.tsx
 import {useEffect, useState} from 'react';
 import {Button, Table, Popconfirm, Space, Modal, Form, Input, Typography} from 'antd';
 import {PlusOutlined, DeleteOutlined} from '@ant-design/icons';
 import {api} from '@/core/api/client';
-import type {Group} from '@/core/api/modules/groups';
-import {useTranslation} from "react-i18next";
+import type {Group} from '@/core/api/modules/groups.ts';
+import {useTranslation} from 'react-i18next';
 
 const {Title} = Typography;
 
-const GroupsTab = () => {
+interface Props {
+    scope: 'xui' | 'mikrotik';
+}
+
+const GroupsTab = ({scope}: Props) => {
     const [groups, setGroups] = useState<Group[]>([]);
     const [loading, setLoading] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [form] = Form.useForm();
+    const {t} = useTranslation();
 
-    const {t} = useTranslation()
+    const scopeApi = api[scope];
 
     const load = async () => {
         setLoading(true);
         try {
-            const data = await api.groups.list();
+            const data = await scopeApi.groups.list();
             setGroups(data);
         } finally {
             setLoading(false);
@@ -28,17 +34,17 @@ const GroupsTab = () => {
 
     useEffect(() => {
         load();
-    }, []);
+    }, [scope]);
 
     const handleDelete = async (id: number) => {
-        await api.groups.delete(id);
+        await scopeApi.groups.delete(id);
         setGroups(prev => prev.filter(g => g.id !== id));
     };
 
     const handleCreate = async (values: { name: string; description?: string }) => {
         setSubmitting(true);
         try {
-            await api.groups.create(values);
+            await scopeApi.groups.create(values);
             setModalOpen(false);
             form.resetFields();
             await load();
@@ -48,8 +54,8 @@ const GroupsTab = () => {
     };
 
     const columns = [
-        {title: t("common.name"), dataIndex: 'name', key: 'name'},
-        {title: t("common.description"), dataIndex: 'description', key: 'description'},
+        {title: t('common.name'), dataIndex: 'name', key: 'name'},
+        {title: t('common.description'), dataIndex: 'description', key: 'description'},
         {
             title: '',
             key: 'actions',
@@ -70,9 +76,9 @@ const GroupsTab = () => {
     return (
         <>
             <Space style={{width: '100%', justifyContent: 'space-between', marginBottom: 16}}>
-                <Title level={4} style={{margin: 0}}>{t("groups.title")}</Title>
+                <Title level={4} style={{margin: 0}}>{t('groups.title')}</Title>
                 <Button type="primary" icon={<PlusOutlined/>} onClick={() => setModalOpen(true)}>
-                    {t("common.add")}
+                    {t('common.add')}
                 </Button>
             </Space>
 
