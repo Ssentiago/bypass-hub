@@ -26,3 +26,6 @@ users = "0.11.0"
 anyhow = "1.0.102"
 indexmap = "2.14.0"
 prost = "0.14.3"
+reqwest = { version = "0.12", features = ["json"] }
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+minijinja = "2"

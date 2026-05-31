@@ -1,6 +1,7 @@
 // src/core/api/client.ts
 import {AuthModule} from "./modules/auth.ts";
 import {ScopedApi} from "./modules/scoped.ts";
+import {InfrastructureApi} from "./modules/infrastructure/index.ts";
 import {API_BASE} from "@/core/config.ts";
 
 export class ApiError extends Error {
@@ -26,6 +27,7 @@ export class Api {
     public auth: AuthModule;
     public xui: ScopedApi;
     public mikrotik: ScopedApi;
+    public infrastructure: InfrastructureApi;
 
     private readonly API_PREFIX = '/api';
 
@@ -33,6 +35,7 @@ export class Api {
         this.auth = new AuthModule(this);
         this.xui = new ScopedApi(this, 'xui');
         this.mikrotik = new ScopedApi(this, 'mikrotik');
+        this.infrastructure = new InfrastructureApi(this);
     }
 
     async request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -43,11 +46,16 @@ export class Api {
             headers.set('Content-Type', 'application/json');
         }
 
-        const response = await fetch(url, {
-            ...options,
-            headers,
-            credentials: 'include',
-        });
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include',
+            });
+        } catch {
+            throw new ApiError(0, null, 'Server unavailable');
+        }
 
         if (!response.ok) {
             const text = await response.text();

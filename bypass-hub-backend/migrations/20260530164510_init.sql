@@ -39,3 +39,33 @@ CREATE TABLE IF NOT EXISTS mikrotik_routes_groups
     group_id INTEGER REFERENCES mikrotik_groups (id) ON DELETE CASCADE,
     PRIMARY KEY (route_id, group_id)
 );
+
+CREATE TABLE IF NOT EXISTS servers
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL UNIQUE,
+    address     TEXT NOT NULL,
+    xui_api_key TEXT NOT NULL,
+    uuid        TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS server_inbounds
+(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_id  INTEGER NOT NULL REFERENCES servers (id) ON DELETE CASCADE,
+    inbound_id INTEGER NOT NULL,
+    UNIQUE (server_id, inbound_id)
+);
+
+CREATE TABLE IF NOT EXISTS mikrotiks
+(
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL,
+    server_id   INTEGER NOT NULL REFERENCES servers (id) ON DELETE RESTRICT,
+    inbound_id  INTEGER NOT NULL REFERENCES server_inbounds (id) ON DELETE RESTRICT,
+    public_key  TEXT,
+    assigned_ip TEXT,
+    uuid        TEXT    NOT NULL UNIQUE,
+    status      TEXT    NOT NULL DEFAULT 'pending_key' CHECK (status IN ('pending_key', 'active')),
+    created_at  INTEGER NOT NULL DEFAULT (unixepoch())
+);

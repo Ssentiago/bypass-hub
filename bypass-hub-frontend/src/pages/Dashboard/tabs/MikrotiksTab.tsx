@@ -6,7 +6,7 @@ const {Title, Text} = Typography;
 
 const MikrotiksTab = () => (
     <div>
-        <Title level={4} style={{margin: '0 0 16px'}}>Mikrotiks</Title>
+        <Title level={4} style={{margin: '0 0 16px'}}>MikroTiks</Title>
         <Empty
             image={<ApiOutlined style={{fontSize: 48, color: '#ccc'}}/>}
             imageStyle={{height: 60}}

@@ -9,8 +9,7 @@ import {useTranslation} from 'react-i18next';
 
 const {Title} = Typography;
 
-const IP_REGEX = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
-
+const IP_REGEX = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/;
 const parseRoutes = (text: string) =>
     text.split('\n')
         .map(line => line.trim())
@@ -89,10 +88,11 @@ const RoutesTab = ({scope}: Props) => {
         await load();
     };
 
-    const handleCreate = async (values: { value: string; type: 'domain' | 'ip'; group_ids?: number[] }) => {
+    const handleCreate = async (values: { value: string; group_ids?: number[] }) => {
         setSubmitting(true);
         try {
-            await scopeApi.routes.create(values);
+            const type = IP_REGEX.test(values.value) ? 'ip' as const : 'domain' as const;
+            await scopeApi.routes.create({...values, type});
             setModalOpen(false);
             form.resetFields();
             await load();
@@ -164,9 +164,6 @@ const RoutesTab = ({scope}: Props) => {
                 confirmLoading={submitting}
             >
                 <Form form={form} layout="vertical" onFinish={handleCreate}>
-                    <Form.Item name="type" label="Type" rules={[{required: true}]} initialValue="domain">
-                        <Select options={[{value: 'domain', label: 'Domain'}, {value: 'ip', label: 'IP'}]}/>
-                    </Form.Item>
                     <Form.Item name="value" label="Value" rules={[{required: true, message: 'Required'}]}>
                         <Input placeholder="example.com or 1.2.3.4"/>
                     </Form.Item>

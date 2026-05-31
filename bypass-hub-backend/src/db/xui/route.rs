@@ -76,10 +76,9 @@ pub async fn find_grouped(pool: &SqlitePool) -> sqlx::Result<Vec<GroupedRoutes>>
 }
 
 pub async fn delete(pool: &SqlitePool, id: i64) -> sqlx::Result<bool> {
-    let affected = sqlx::query!("DELETE FROM xui_routes WHERE id = ?", id)
+    let result = sqlx::query!("DELETE FROM xui_routes WHERE id = ?", id)
         .execute(pool)
-        .await?
-        .rows_affected();
+        .await?;
 
-    Ok(affected > 0)
+    Ok(result.rows_affected() > 0)
 }

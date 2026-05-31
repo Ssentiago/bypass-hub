@@ -30,8 +30,8 @@ const DashboardLayout = ({onLogout}: { onLogout: () => void }) => {
     ];
 
     const INFRASTRUCTURE_ITEMS = [
-        {key: '/infrastructure/servers', icon: <CloudServerOutlined/>, label: 'Servers'},
-        {key: '/infrastructure/mikrotiks', icon: <ApiOutlined/>, label: 'Mikrotiks'},
+        {key: '/infrastructure/servers', icon: <CloudServerOutlined/>, label: t("infrastructure.servers.title")},
+        {key: '/infrastructure/mikrotiks', icon: <ApiOutlined/>, label: 'MikroTiks'},
     ];
 
     const handleLogout = async () => {

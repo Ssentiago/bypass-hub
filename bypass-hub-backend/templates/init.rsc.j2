@@ -1,0 +1,98 @@
+# templates/init.rsc.j2
+# bypass-hub init script
+# Generated for mikrotik uuid: {{ uuid }}
+
+# --- Check RouterOS version ---
+:local ver [/system resource get version]
+:local major [:tonum [:pick $ver 0 1]]
+:local minor [:tonum [:pick $ver 2 4]]
+:if ($major < 7) do={
+:log error "REQUIRED: RouterOS 7.19 or higher."
+:error "RouterOS version too old"
+}
+:if ($major = 7 and $minor < 19) do={
+:log error "REQUIRED: RouterOS 7.19 or higher."
+:error "RouterOS version too old"
+}
+
+# --- Certificate settings ---
+:local certDefaults [/certificate/settings/get current-defaults]
+:if (!($certDefaults ~ "dns")) do={
+/certificate/settings/set current-defaults=($certDefaults . " dns")
+}
+
+# --- DNS over HTTPS ---
+/ip dns static
+add type=A name=dns.google address=8.8.8.8 comment="bypass-hub"
+add type=A name=dns.google address=8.8.4.4 comment="bypass-hub"
+
+/ip dns set \
+use-doh-server=https://dns.google/dns-query \
+verify-doh-cert=yes \
+doh-max-server-connections=100 \
+doh-max-concurrent-queries=300 \
+doh-timeout=10s
+
+/ip dhcp-client set numbers=0 use-peer-dns=no
+/ip dns set servers="" allow-remote-requests=yes
+
+# --- DNS redirect ---
+/ip firewall nat
+add chain=dstnat protocol=udp dst-port=53 action=redirect to-ports=53 comment="bypass-hub: Redirect DNS UDP"
+add chain=dstnat protocol=tcp dst-port=53 action=redirect to-ports=53 comment="bypass-hub: Redirect DNS TCP"
+
+# --- WireGuard interface ---
+/interface wireguard
+add name=wg-client mtu=1420
+
+# --- WireGuard peer ---
+/interface wireguard peers
+add name=3x-ui \
+endpoint-address={{ endpoint_address }} \
+endpoint-port={{ endpoint_port }} \
+interface=wg-client \
+public-key="{{ server_public_key }}" \
+allowed-address=0.0.0.0/0 \
+persistent-keepalive=25
+
+# --- Interface IP ---
+/ip address
+add address={{ assigned_ip }}/24 interface=wg-client
+
+# --- Firewall ---
+/ip firewall filter
+add chain=input in-interface=wg-client action=accept comment="bypass-hub: ACCEPT wg-client INPUT"
+add chain=forward in-interface=wg-client action=accept comment="bypass-hub: ACCEPT wg-client FORWARD"
+add chain=forward out-interface=wg-client connection-state=established,related action=accept comment="bypass-hub: ACCEPT wg-client ESTABLISHED FORWARD"
+
+# --- Masquerade ---
+/ip firewall nat
+add chain=srcnat out-interface=wg-client action=masquerade comment="bypass-hub: Masquerade wg-client"
+add chain=srcnat src-address=10.0.0.0/24 out-interface-list=WAN action=masquerade comment="bypass-hub: Masquerade LAN to WAN"
+
+# --- Routing table ---
+/routing table
+add disabled=no fib name=to_vpn_table
+
+/ip route
+add dst-address=0.0.0.0/0 gateway=wg-client routing-table=to_vpn_table
+
+# --- Mangle rules ---
+/ip firewall mangle
+add action=change-mss chain=forward new-mss=1360 out-interface=wg-client passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1453-65535 comment="bypass-hub: MSS clamp"
+add action=mark-connection chain=prerouting connection-mark=no-mark dst-address-list=to_vpn_list in-interface-list=!WAN new-connection-mark=to_vpn_mark passthrough=yes comment="bypass-hub: mark conn"
+add action=mark-routing chain=prerouting connection-mark=to_vpn_mark new-routing-mark=to_vpn_table passthrough=no in-interface=!wg-client comment="bypass-hub: vpn-routing"
+add chain=output dst-address-list=to_vpn_list action=mark-connection new-connection-mark=to_vpn_mark passthrough=yes connection-mark=no-mark comment="bypass-hub: mark conn output"
+add chain=output connection-mark=to_vpn_mark action=mark-routing new-routing-mark=to_vpn_table passthrough=no comment="bypass-hub: mark routing output"
+/ip firewall filter set [find action~"fasttrack-connection"] connection-mark=!to_vpn_mark
+
+# --- Agent scheduler ---
+/system scheduler
+add name=bypass-hub-agent \
+interval=1d \
+on-event=":local result [/tool fetch url=\"{{ lists_base_url }}/lists/mikrotik/{{ uuid }}\" output=user as-value]; /import file-name=($result->\"data\")" \
+comment="bypass-hub: auto-update vpn list"
+
+:log info "bypass-hub init complete."
+:put "Run this to get your public key:"
+:put "/interface wireguard print where name=wg-client"

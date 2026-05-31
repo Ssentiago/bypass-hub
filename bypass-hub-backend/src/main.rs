@@ -49,12 +49,22 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/xui/groups", api::xui::group::router())
         .nest("/api/mikrotik/routes", api::mikrotik::route::router())
         .nest("/api/mikrotik/groups", api::mikrotik::group::router())
+        .nest(
+            "/api/infrastructure/servers",
+            api::infrastructure::servers::router(),
+        )
+        .nest(
+            "/api/infrastructure/mikrotiks",
+            api::infrastructure::mikrotiks::router(),
+        )
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::session::auth_session,
         ));
 
-    let public = Router::new().nest("/api/auth", api::auth::router());
+    let public = Router::new()
+        .nest("/api/auth", api::auth::router())
+        .nest("/lists", api::lists::router());
 
     let mut app = Router::new()
         .merge(protected)
