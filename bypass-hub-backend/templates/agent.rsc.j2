@@ -1,0 +1,13 @@
+# bypass-hub agent script
+# Generated for mikrotik uuid: {{ uuid }}
+
+/system scheduler
+:if ([:len [/system scheduler find name="bypass-hub-agent"]] > 0) do={
+/system scheduler remove [find name="bypass-hub-agent"]
+}
+add name=bypass-hub-agent \
+interval=1d00:00:00 \
+on-event="/tool fetch url=\"{{ lists_base_url }}/lists/mikrotik/{{ uuid }}\" dst-path=bypass-hub.rsc mode=https\r\n/import file-name=bypass-hub.rsc" \
+comment="bypass-hub: auto-update vpn list"
+
+:log info "bypass-hub agent installed."

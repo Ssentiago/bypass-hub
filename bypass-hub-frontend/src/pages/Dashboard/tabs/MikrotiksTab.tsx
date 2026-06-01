@@ -4,7 +4,14 @@ import {
     Button, Table, Popconfirm, Space, Modal, Form, Input,
     Typography, Tag, Select, Tooltip,
 } from 'antd';
-import {PlusOutlined, DeleteOutlined, CopyOutlined, DownloadOutlined, KeyOutlined} from '@ant-design/icons';
+import {
+    PlusOutlined,
+    DeleteOutlined,
+    CopyOutlined,
+    DownloadOutlined,
+    KeyOutlined,
+    CodeOutlined
+} from '@ant-design/icons';
 import {api} from '@/core/api/client';
 import type {Mikrotik} from '@/core/api/modules/infrastructure/mikrotiks';
 import type {Server, ServerInbound} from '@/core/api/modules/infrastructure/servers';
@@ -165,6 +172,17 @@ const MikrotiksTab = () => {
                             rel="noreferrer"
                         />
                     </Tooltip>
+                    {record.status === 'active' && (
+                        <Tooltip title="Download agent.rsc">
+                            <Button
+                                icon={<CodeOutlined/>}
+                                size="small"
+                                href={api.infrastructure.mikrotiks.agentUrl(record.id)}
+                                target="_blank"
+                                rel="noreferrer"
+                            />
+                        </Tooltip>
+                    )}
                     <Popconfirm
                         title="Delete mikrotik?"
                         onConfirm={() => handleDelete(record.id)}

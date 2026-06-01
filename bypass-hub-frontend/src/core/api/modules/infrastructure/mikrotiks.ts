@@ -60,4 +60,8 @@ export class MikrotiksModule {
     scriptUrl(id: number): string {
         return `${API_BASE}/api/infrastructure/mikrotiks/${id}/script`;
     }
+
+    agentUrl(id: number): string {
+        return `${API_BASE}/api/infrastructure/mikrotiks/${id}/agent`;
+    }
 }

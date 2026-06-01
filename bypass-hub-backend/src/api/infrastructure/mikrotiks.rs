@@ -385,10 +385,51 @@ async fn get_script(State(state): State<AppState>, Path(id): Path<i64>) -> impl 
     (headers, script).into_response()
 }
 
+async fn get_agent(State(state): State<AppState>, Path(id): Path<i64>) -> impl IntoResponse {
+    let mikrotik = match db::find_by_id(&state.pool, id).await {
+        Ok(Some(m)) => m,
+        Ok(None) => return StatusCode::NOT_FOUND.into_response(),
+        Err(e) => {
+            eprintln!("DB error: {e}");
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
+
+    if mikrotik.status != "active" {
+        return (StatusCode::BAD_REQUEST, "mikrotik not active").into_response();
+    }
+
+    let lists_base_url =
+        std::env::var("BASE_URL").unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
+
+    let params = crate::utils::script::AgentParams {
+        mikrotik_uuid: mikrotik.uuid.clone(),
+        lists_base_url,
+    };
+
+    let script = match crate::utils::script::generate_agent_script(&params) {
+        Ok(s) => s,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
+
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/plain; charset=utf-8"),
+    );
+    headers.insert(
+        axum::http::header::CONTENT_DISPOSITION,
+        axum::http::HeaderValue::from_static("attachment; filename=\"bypass-hub-agent.rsc\""),
+    );
+
+    (headers, script).into_response()
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list).post(create))
         .route("/{id}", delete(remove))
         .route("/{id}/key", patch(set_key))
         .route("/{id}/script", get(get_script))
+        .route("/{id}/agent", get(get_agent))
 }
