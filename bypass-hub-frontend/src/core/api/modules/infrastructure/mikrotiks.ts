@@ -57,6 +57,12 @@ export class MikrotiksModule {
         });
     }
 
+    retry(id: number): Promise<SetKeyResponse> {
+        return this.api.request(`/infrastructure/mikrotiks/${id}/retry`, {
+            method: 'POST',
+        });
+    }
+
     scriptUrl(id: number): string {
         return `${API_BASE}/api/infrastructure/mikrotiks/${id}/script`;
     }
@@ -64,4 +70,5 @@ export class MikrotiksModule {
     agentUrl(id: number): string {
         return `${API_BASE}/api/infrastructure/mikrotiks/${id}/agent`;
     }
+
 }

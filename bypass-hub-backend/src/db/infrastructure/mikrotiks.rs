@@ -101,3 +101,16 @@ pub async fn delete(pool: &SqlitePool, id: i64) -> sqlx::Result<bool> {
 
     Ok(affected > 0)
 }
+
+pub async fn save_public_key(pool: &SqlitePool, id: i64, public_key: &str) -> sqlx::Result<bool> {
+    let affected = sqlx::query!(
+        "UPDATE mikrotiks SET public_key = ? WHERE id = ? AND status = 'pending_key'",
+        public_key,
+        id
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    Ok(affected > 0)
+}

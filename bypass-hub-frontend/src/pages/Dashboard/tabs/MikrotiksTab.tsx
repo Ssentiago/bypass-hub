@@ -10,7 +10,8 @@ import {
     CopyOutlined,
     DownloadOutlined,
     KeyOutlined,
-    CodeOutlined
+    CodeOutlined,
+    SyncOutlined
 } from '@ant-design/icons';
 import {api} from '@/core/api/client';
 import type {Mikrotik} from '@/core/api/modules/infrastructure/mikrotiks';
@@ -59,6 +60,15 @@ const MikrotiksTab = () => {
             setServerInbounds(prev => ({...prev, [serverId]: data}));
         } finally {
             setInboundsLoading(false);
+        }
+    };
+
+    const handleRetry = async (id: number) => {
+        try {
+            await api.infrastructure.mikrotiks.retry(id);
+            await load();
+        } catch (e) {
+            // можно message.error если подключён
         }
     };
 
@@ -160,6 +170,15 @@ const MikrotiksTab = () => {
                                     setKeyModalId(record.id);
                                     setKeyValue('');
                                 }}
+                            />
+                        </Tooltip>
+                    )}
+                    {record.status === 'pending_key' && record.public_key && (
+                        <Tooltip title="Retry 3x-ui sync">
+                            <Button
+                                icon={<SyncOutlined/>}
+                                size="small"
+                                onClick={() => handleRetry(record.id)}
                             />
                         </Tooltip>
                     )}
